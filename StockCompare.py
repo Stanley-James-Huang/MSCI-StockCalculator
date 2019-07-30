@@ -10,7 +10,6 @@ ticker1 = input("Please enter ticker 1: ")
 ticker2 = input("Please enter ticker 2: ")
 
 #Fetch and format data
-marketData = pdr.get_data_yahoo('^GSPC',start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
 data1 = pdr.get_data_yahoo(ticker1,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
 data2 = pdr.get_data_yahoo(ticker2,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
 
@@ -22,43 +21,78 @@ data.columns = [ticker1,ticker2]
 
 #Calculate percentage returns for each stock
 returns_monthly  = data.pct_change()
-returns_annual = (1+returns_monthly.mean())**12-1
+returns_annual = ((1+returns_monthly.mean())**12)-1
 
 #Calculate covariance and variance for each stock
 cov_monthly = returns_monthly.cov()
 cov_annual = cov_monthly * 12
 
 w = np.array([0,1])
-print(w)
-minVariance = 100000000
-stdDev = 0
-proportion = 0
-expectedReturn = 0
 
+#minVariance portfolio
+minVariance = 100000000
+MVPstdDev = 0
+MVPproportion = 0
+MVPexpectedReturn = 0
+
+#Market portfolio (max sharpe ratio)
+rf = 0.02
+max_Sharpe = -1
+maxSharpe_stdDev = 0
+maxSharpe_proportion = 0
+maxSharpe_expectedReturn = 0
+
+#Set things up for the loop
 returns = np.array(returns_annual)
-print(returns)
 covar = np.array(cov_annual)
-print(covar)
+
 for x in range(0,41):
 	#calculate portfolio statistics for each increment of 2.5
 	return_p = (w[0]+x*0.025) * returns[0] + (w[1]-x*0.025) * returns[1]
 	var_p    = (w[0]+x*0.025)**2*covar[0,0] + (w[1]-x*0.025)**2*covar[1,1] + 2*(w[0]+x*0.025)*(w[1]-x*0.025)*covar[0,1]
 	sd_p     = np.sqrt(var_p)
-	
-	print(return_p)
-	print(var_p)
-	print(sd_p)
-	
+
+	#Find min variance portfolio
 	if minVariance > var_p:	
 		minVariance = var_p
-		stdDev = sd_p
-		proportion = x
-		expectedReturn = return_p
+		MVPstdDev = sd_p
+		MVPproportion = x
+		MVPexpectedReturn = return_p
+		
+	#Find market portfolio
+	sharpe_ratio = (return_p - rf)/sd_p
+	if max_Sharpe < sharpe_ratio:  
+		max_Sharpe = sharpe_ratio
+		maxSharpe_stdDev = sd_p
+		maxSharpe_proportion = x
+		maxSharpe_expectedReturn = return_p
+print("PART 1: Minimum Variance Portfolio\n")
+print("MVP Proportion", ticker1, ":", MVPproportion*2.5, "%")
+print("MVP Proportion", ticker2, ":", (100-MVPproportion*2.5), "%")
+print("MVP Standard Deviation:", MVPstdDev*100, "%")
+print("MVP Expected Portfolio Return:", MVPexpectedReturn*100, "%\n")
 
-print("MVP Proportion", ticker1, ":", proportion*2.5, "%")
-print("MVP Proportion", ticker2, ":", (100-proportion*2.5), "%")
-print("MVP Standard Deviation:", stdDev*100, "%")
-print("MVP Expected Portfolio Return:", expectedReturn*100, "%")
-rf = 0.03
-	
+#PART 2 BEGINS HERE
+print("PART 2: CML, Market Portfolio and Risk-free Assets\n")
+print("\tCML Case 1: Market Portfolio\n")
+print("Maximum Sharpe Ratio:", max_Sharpe)
+print("Market Portfolio Proportion", ticker1, ":", maxSharpe_proportion*2.5, "%")
+print("Market Portfolio Proportion", ticker2, ":", (100-maxSharpe_proportion*2.5), "%")
+print("Market Portfolio Standard Deviation:", maxSharpe_stdDev*100, "%")
+print("Market Portfolio Expected Portfolio Return:", maxSharpe_expectedReturn*100, "%\n")
+
+print("\tCML Case 2: 50% risk-free asset, 50% Market Portfolio\n")
+#covariance and variance are 0 for a risk-free asset
+return_2 = (0.5) * rf + (0.5) * maxSharpe_expectedReturn
+var_2 = (0.5)**2*maxSharpe_stdDev**2
+sd_2 = np.sqrt(var_2)
+print("Portfolio Expected Return:", return_2*100, "%")
+print("Portfolio Standard Deviation:", sd_2*100, "%\n")
+
+print("\tCML Case 3: -50% risk-free asset, 150% Market Portfolio\n")
+return_3 = (-0.5) * rf + (1.5) * maxSharpe_expectedReturn
+var_3 = (1.5)**2*maxSharpe_stdDev**2
+sd_3 = np.sqrt(var_3)
+print("Portfolio Expected Return:", return_3*100, "%")
+print("Portfolio Standard Deviation:", sd_3*100, "%\n")
 
