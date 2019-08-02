@@ -13,8 +13,8 @@ ticker2 = input("Please enter ticker 2: ")
 data1 = pdr.get_data_yahoo(ticker1,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
 data2 = pdr.get_data_yahoo(ticker2,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
 
-data1 = data1['Adj Close']
-data2 = data2['Adj Close']
+data1 = data1['Close']
+data2 = data2['Close']
 
 data = pd.merge(data1,data2, on='Date')
 data.columns = [ticker1,ticker2]
@@ -114,7 +114,6 @@ port_SRs = [calc_SR(w,returns,covar,rf) for w in weights]
 
 df = pd.DataFrame([port_returns,port_sds, port_SRs]).transpose()
 df.columns=['Returns', 'Volatility', 'Sharpe Ratio']
-print(df)
 
 plt.style.use('seaborn-pastel')
 df.plot.scatter(x='Volatility', y='Returns', c='Sharpe Ratio',
