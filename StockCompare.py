@@ -4,14 +4,18 @@ from datetime import datetime
 import pandas_datareader as pdr
 import matplotlib.pyplot as plt
 #include versions of the headers
-
+#pandas: 0.25.0
+#numpy: 1.17.0
+#datetime: 4.3
+#pandas-datareader: 0.7.4
+#matplotlib: 3.1.1
 #Prompt user
 ticker1 = input("Please enter ticker 1: ")
 ticker2 = input("Please enter ticker 2: ")
 
 #Fetch and format data
-data1 = pdr.get_data_yahoo(ticker1,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
-data2 = pdr.get_data_yahoo(ticker2,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
+data1 = pdr.get_data_yahoo(ticker1,start=datetime(2018, 6, 1), end=datetime(2019, 6, 2),interval='m')
+data2 = pdr.get_data_yahoo(ticker2,start=datetime(2018, 6, 1), end=datetime(2019, 6, 2),interval='m')
 
 data1 = data1['Close']
 data2 = data2['Close']
