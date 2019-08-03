@@ -4,17 +4,21 @@ from datetime import datetime
 import pandas_datareader as pdr
 import matplotlib.pyplot as plt
 #include versions of the headers
-
+#pandas: 0.25.0
+#numpy: 1.17.0
+#datetime: 4.3
+#pandas-datareader: 0.7.4
+#matplotlib: 3.1.1
 #Prompt user
 ticker1 = input("Please enter ticker 1: ")
 ticker2 = input("Please enter ticker 2: ")
 
 #Fetch and format data
-data1 = pdr.get_data_yahoo(ticker1,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
-data2 = pdr.get_data_yahoo(ticker2,start=datetime(2018, 6, 1), end=datetime(2019, 6, 1),interval='m')
+data1 = pdr.get_data_yahoo(ticker1,start=datetime(2018, 6, 1), end=datetime(2019, 6, 2),interval='m')
+data2 = pdr.get_data_yahoo(ticker2,start=datetime(2018, 6, 1), end=datetime(2019, 6, 2),interval='m')
 
-data1 = data1['Adj Close']
-data2 = data2['Adj Close']
+data1 = data1['Close']
+data2 = data2['Close']
 
 data = pd.merge(data1,data2, on='Date')
 data.columns = [ticker1,ticker2]
@@ -96,3 +100,29 @@ sd_3 = np.sqrt(var_3)
 print("Portfolio Expected Return:", return_3*100, "%")
 print("Portfolio Standard Deviation:", sd_3*100, "%\n")
 
+
+weights_0 = np.array(list(range(0,41)))/(100/2.5)
+weights_1 = 1 - weights_0 
+weights   = np.array([weights_0,weights_1]).T
+
+port_returns = [w[0] * returns[0] + w[1] * returns[1] for w in weights]
+port_vars    = [w[0]**2*covar[0,0] + w[1]**2*covar[1,1] + 2*w[0]*w[1]*covar[0,1] for w in weights]
+port_sds     = [np.sqrt(v) for v in port_vars]
+
+def calc_SR(w,mu,Sigma,rf):
+    return_p = np.matmul(w,mu.T)
+    var_p    = np.matmul(np.matmul(w,Sigma),w.T)
+    sd_p     = np.sqrt(var_p)
+    return((return_p - rf)/sd_p)
+port_SRs = [calc_SR(w,returns,covar,rf) for w in weights]
+
+df = pd.DataFrame([port_returns,port_sds, port_SRs]).transpose()
+df.columns=['Returns', 'Volatility', 'Sharpe Ratio']
+
+plt.style.use('seaborn-pastel')
+df.plot.scatter(x='Volatility', y='Returns', c='Sharpe Ratio',
+                cmap='RdYlGn', edgecolors='black', figsize=(10, 8), grid=True)
+plt.xlabel('Volatility (Std. Deviation)')
+plt.ylabel('Expected Returns')
+plt.title('Efficient Frontier')
+plt.show()
